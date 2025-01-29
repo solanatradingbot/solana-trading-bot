@@ -1,0 +1,44 @@
+const fetch = require("node-fetch");
+const { Connection, PublicKey } = require("@solana/web3.js");
+require("dotenv").config();
+
+// QuickNode RPC URL
+const quickNodeUrl = "https://lingering-spring-reel.solana-mainnet.quiknode.pro/54d3be0593edda91ced37946a5a0c6aa51242d22/";
+
+(async () => {
+  try {
+    // Initialize Solana connection using QuickNode
+    const connection = new Connection(quickNodeUrl, "confirmed");
+
+    // Example Wallet Address (can be updated as required)
+    const walletAddress = new PublicKey("DLhW3QrmYjqaypi3MokujK5FFzu5Fwj73L6ZVcggH3sE");
+    const walletBalance = await connection.getBalance(walletAddress);
+
+    console.log(`Wallet Balance: ${(walletBalance / 1e9).toFixed(4)} SOL`);
+
+    // Jupiter API Quote Endpoint
+    const jupiterQuoteAPI = "https://quote-api.jup.ag/v4/quote";
+    const inputMint = "So11111111111111111111111111111111111111112"; // SOL mint
+    const outputMint = "Es9vMFrzaCER1Rz9pe3tXXis2zsRk2r1frGjRrb9ToA"; // USDC mint
+    const amount = Math.round(0.01 * 1e9); // Trade 0.01 SOL in Lamports
+
+    const url = `${jupiterQuoteAPI}?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amount}&slippage=1`;
+    console.log(`Fetching trade route from Jupiter: ${url}`);
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.error(`HTTP Error: ${response.status}`);
+      return;
+    }
+
+    const data = await response.json();
+    if (data && data.data && data.data.length > 0) {
+      console.log("Trade Simulation Success:");
+      console.log(`Route Summary: ${JSON.stringify(data.data[0].routeSummary, null, 2)}`);
+    } else {
+      console.log("No trade route found.");
+    }
+  } catch (error) {
+    console.error("Error simulating trade:", error);
+  }
+})();
